@@ -1,18 +1,13 @@
-import '../css/style.css'
+import '../css/style.css';
+import { LocalStorageTaskRepository } from './repositories/LocalStorageTaskRepository.js';
+import { TaskService } from './services/TaskService.js';
 
-let tasks = [];
-let taskId = 1;
+const taskRepository = new LocalStorageTaskRepository();
+const taskService = new TaskService(taskRepository);
+
 let currentFilter = 'all';
 
-
 window.onload = function () {
-    let savedTasks = localStorage.getItem('tasks');
-
-    if (savedTasks) {
-        tasks = JSON.parse(savedTasks);
-        taskId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
-    }
-
     document.getElementById('addBtn').onclick = addTask;
 
     let filterButtons = document.querySelectorAll('.filter-btn');
@@ -34,35 +29,22 @@ window.onload = function () {
 
 function addTask() {
     let input = document.getElementById('taskInput');
-    let text = input.value;
 
-    if (text == '') {
-        alert('Por favor escribe una tarea');
-        return;
+    try {
+        taskService.add(input.value);
+        input.value = '';
+        renderTasks();
+        updateStats();
+    } catch (error) {
+        alert(error.message);
     }
-
-
-    let newTask = {
-        id: taskId++,
-        text: text,
-        completed: false,
-        createdAt: new Date().toISOString()
-    };
-
-    tasks.push(newTask);
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-
-    input.value = '';
-
-    renderTasks();
-    updateStats();
 }
-
 
 function renderTasks() {
     let taskList = document.getElementById('taskList');
     taskList.innerHTML = '';
 
+    let tasks = taskService.getAll();
     let filteredTasks = tasks;
     if (currentFilter == 'active') {
         filteredTasks = tasks.filter(function (task) {
@@ -73,7 +55,6 @@ function renderTasks() {
             return task.completed;
         });
     }
-
 
     for (let i = 0; i < filteredTasks.length; i++) {
         let task = filteredTasks[i];
@@ -113,31 +94,23 @@ function renderTasks() {
 }
 
 function toggleTask(id) {
-    for (let i = 0; i < tasks.length; i++) {
-        if (tasks[i].id == id) {
-            tasks[i].completed = !tasks[i].completed;
-            break;
-        }
+    try {
+        taskService.toggle(id);
+        renderTasks();
+        updateStats();
+    } catch (error) {
+        console.error(error.message);
     }
-
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-
-    renderTasks();
-    updateStats();
 }
 
 function deleteTask(id) {
-    let newTasks = [];
-    for (let i = 0; i < tasks.length; i++) {
-        if (tasks[i].id != id) {
-            newTasks.push(tasks[i]);
-        }
+    try {
+        taskService.delete(id);
+        renderTasks();
+        updateStats();
+    } catch (error) {
+        console.error(error.message);
     }
-    tasks = newTasks;
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-
-    renderTasks();
-    updateStats();
 }
 
 function filterTasks(filter) {
@@ -160,18 +133,7 @@ function filterTasks(filter) {
 }
 
 function updateStats() {
-    let total = tasks.length;
-    let completed = 0;
-    let active = 0;
-
-    for (let i = 0; i < tasks.length; i++) {
-        if (tasks[i].completed) {
-            completed++;
-        } else {
-            active++;
-        }
-    }
-
+    let stats = taskService.getStats();
     let statsDiv = document.getElementById('stats');
-    statsDiv.innerHTML = 'Total: ' + total + ' | Completadas: ' + completed + ' | Activas: ' + active;
+    statsDiv.innerHTML = 'Total: ' + stats.total + ' | Completadas: ' + stats.completed + ' | Activas: ' + stats.active;
 }
