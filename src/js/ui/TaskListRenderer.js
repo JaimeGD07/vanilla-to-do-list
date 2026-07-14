@@ -1,3 +1,5 @@
+const EMPTY_LIST_MESSAGE = 'No hay tareas para mostrar';
+
 export class TaskListRenderer {
     #container;
     #onToggle;
@@ -13,8 +15,7 @@ export class TaskListRenderer {
         this.#container.innerHTML = '';
 
         if (tasks.length === 0) {
-            this.#container.innerHTML =
-                '<p style="text-align: center; color: #999; padding: 20px;">No hay tareas para mostrar</p>';
+            this.#renderEmptyState();
             return;
         }
 
@@ -23,16 +24,25 @@ export class TaskListRenderer {
         });
     }
 
+    #renderEmptyState() {
+        const message = document.createElement('p');
+        message.textContent = EMPTY_LIST_MESSAGE;
+        message.style.textAlign = 'center';
+        message.style.color = '#999';
+        message.style.padding = '20px';
+        this.#container.appendChild(message);
+    }
+
     #createTaskElement(task) {
         const taskDiv = document.createElement('div');
         taskDiv.className = task.completed ? 'task-item completed' : 'task-item';
 
+        const completeLabel = task.completed ? 'Reactivar' : 'Completar';
+
         taskDiv.innerHTML = `
             <span>${task.text}</span>
             <div class="task-buttons">
-              <button class="complete-btn" data-id="${task.id}">
-                ${task.completed ? 'Reactivar' : 'Completar'}
-              </button>
+              <button class="complete-btn" data-id="${task.id}">${completeLabel}</button>
               <button class="delete-btn" data-id="${task.id}">Eliminar</button>
             </div>`;
 
