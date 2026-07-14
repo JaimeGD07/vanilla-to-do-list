@@ -1,5 +1,13 @@
 import { filterRegistry } from '../filters/filterRegistry.js';
 
+/**
+ * DIP: depende de abstracciones (taskService, renderers) inyectadas
+ * por constructor, no las crea ni conoce sus detalles internos.
+ * ISP: en vez de depender de un único "UIRenderer" con muchos métodos,
+ * depende de tres renderers pequeños y enfocados (TaskListRenderer,
+ * StatsRenderer, FilterButtonsRenderer), cada uno con solo lo que necesita.
+ */
+
 export class TaskController {
     #taskService;
     #taskListRenderer;
